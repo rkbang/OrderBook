@@ -27,9 +27,10 @@ Inputs:
     PX: positive double precision value (7.5 format
 */
 
-constexpr char format[] = "%c,%u,%s,%c,%u,%lf";
+constexpr char format[] = "%c %u %s %c %u %lf";
 
 std::unique_ptr<Order> OrderParser::Parse(const char* input) {
+  std::cout << input << std::endl;
   std::unique_ptr<Order> order = std::make_unique<Order>();
   if (sscanf(input, format, &order->action, &order->order_id, &order->symbol, &order->side, &order->quantity, &order->price) <= 0) {
     order.reset();

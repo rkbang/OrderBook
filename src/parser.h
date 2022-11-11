@@ -1,6 +1,7 @@
 #include <memory>
 
 #include "order.h"
+#include "allocator.h"
 
 namespace order_book {
 /*
@@ -30,7 +31,9 @@ Inputs:
 */
 class OrderParser {
   public:
-  std::unique_ptr<Order> Parse(const char* input);
+  std::shared_ptr<Order> Parse(const char* input);
+  private:
+  Allocator<Order> allocator_;
 };
 
 }

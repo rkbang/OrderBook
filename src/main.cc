@@ -4,6 +4,8 @@
 #include <list>
 
 #include "parser.h"
+#include "trade_engine.h"
+#include "allocator.h"
 
 typedef std::list<std::string> results_t;
 
@@ -11,9 +13,10 @@ class SimpleCross
 {
 public:
     results_t action(const std::string& line) { 
-        std::unique_ptr<order_book::Order> order_ptr = order_parser_.Parse(line.c_str());
+        order_book::OrderPtr order_ptr = order_parser_.Parse(line.c_str());
         if (order_ptr) {
             order_ptr->Print();
+            symbol_trade_engine_map_[order_ptr->symbol.bytes].Process(order_ptr);
         } else {
             std::cout << "Unable to parse order";
         }
@@ -21,6 +24,7 @@ public:
     }
 private:
     order_book::OrderParser order_parser_;
+    std::unordered_map<SymbolBytes, order_book::TradeEngine> symbol_trade_engine_map_;
 };
 
 int main(int argc, char **argv)

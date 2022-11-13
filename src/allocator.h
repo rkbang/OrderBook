@@ -4,11 +4,17 @@
 
 namespace order_book
 {
-  constexpr uint32_t max_allocated_size = 1000;
+  constexpr uint32_t max_allocated_size = 10000;
   template <class T>
   class Allocator : public std::allocator<T>
   {
   public:
+    static Allocator<T>& instance()
+    {
+      static Allocator<T> instance;
+      return instance;
+    }
+
     ~Allocator()
     {
       while (!object_stack_.empty())
@@ -29,7 +35,7 @@ namespace order_book
       }
     }
 
-    std::shared_ptr<T> allocate()
+    T* allocate()
     {
       T *obj_ptr;
       if (object_stack_.empty())
@@ -40,8 +46,7 @@ namespace order_book
       {
         obj_ptr = GetTop();
       }
-
-      return std::shared_ptr<T>(obj_ptr, [this](T *ptr) { deallocate(ptr); });
+      return obj_ptr;
     }
 
   private:

@@ -1,4 +1,7 @@
 #include "parser.h"
+#include "allocator.h"
+
+#include <iostream>
 
 namespace order_book {
 /*
@@ -29,12 +32,13 @@ Inputs:
 
 constexpr char format[] = "%c %u %s %c %hu %lf";
 
-std::shared_ptr<Order> OrderParser::Parse(const char* input) {
+OrderPtr OrderParser::Parse(const char* input) {
   std::cout << input << std::endl;
-  std::shared_ptr<Order> order = allocator_.allocate();
+  OrderPtr order = Allocator<Order>::instance().allocate();
   double price = 0.0;
   if (sscanf(input, format, &order->action, &order->order_id, &order->symbol.bytes, &order->side, &order->quantity, &price) <= 0) {
-    order.reset();
+    Allocator<Order>::instance().deallocate(order);
+    return nullptr;
   }
   order->normalized_price = price * kNormalizationMultiplier;
   return order;

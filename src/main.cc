@@ -16,7 +16,7 @@ public:
         order_book::OrderPtr order_ptr = order_parser_.Parse(line.c_str());
         if (order_ptr) {
             order_ptr->Print();
-            symbol_trade_engine_map_[order_ptr->symbol.bytes].Process(order_ptr);
+            return trade_engine_.Process(order_ptr);
         } else {
             std::cout << "Unable to parse order";
         }
@@ -24,7 +24,7 @@ public:
     }
 private:
     order_book::OrderParser order_parser_;
-    std::unordered_map<SymbolBytes, order_book::TradeEngine> symbol_trade_engine_map_;
+    order_book::TradeEngine trade_engine_;
 };
 
 int main(int argc, char **argv)
@@ -37,7 +37,7 @@ int main(int argc, char **argv)
         results_t results = scross.action(line);
         for (results_t::const_iterator it=results.begin(); it!=results.end(); ++it)
         {
-            std::cout << *it << std::endl;
+            std::cout << "Result " << *it << std::endl;
         }
     }
     return 0;

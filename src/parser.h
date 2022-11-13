@@ -1,6 +1,6 @@
 #include <memory>
 
-#include "order.h"
+#include "types.h"
 #include "allocator.h"
 
 namespace order_book {
@@ -31,9 +31,8 @@ Inputs:
 */
 class OrderParser {
   public:
-  std::shared_ptr<Order> Parse(const char* input);
+  OrderPtr Parse(const char* input);
   private:
-  Allocator<Order> allocator_;
 };
 
 }

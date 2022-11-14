@@ -50,7 +50,7 @@ namespace order_book {
 
   Results StockTradeEngine::Print() const {
     Results results;
-    results.splice(results.end(), sell_side_price_map_.Print(kSellStr));
+    results.splice(results.end(), sell_side_price_map_.ReversePrint(kSellStr));
     results.splice(results.end(), buy_side_price_map_.Print(kBuyStr)); 
     return results;
   }
@@ -72,9 +72,10 @@ namespace order_book {
   }
 
   StockTradeEngine& TradeEngine::GetStockTradeEngine(OrderPtr order) {
-    auto symbol_trade_engine_iter = stock_trade_engine_map_.find(std::string(order->symbol.bytes));
+
+    auto symbol_trade_engine_iter = stock_trade_engine_map_.find(order->symbol);
     if (symbol_trade_engine_iter == stock_trade_engine_map_.end()) {
-      symbol_trade_engine_iter = stock_trade_engine_map_.emplace(std::string(order->symbol.bytes), 
+      symbol_trade_engine_iter = stock_trade_engine_map_.emplace(order->symbol, 
       std::make_unique<StockTradeEngine>()).first;
     }
     return *(symbol_trade_engine_iter->second);
@@ -102,7 +103,7 @@ namespace order_book {
       return results;
     }
     StockTradeEngine& stock_trade_engine(GetStockTradeEngine(order));
-    results.merge(stock_trade_engine.Process(order));
+    results.splice(results.end(), stock_trade_engine.Process(order));
     return results;
   }
 
@@ -126,7 +127,7 @@ namespace order_book {
     for(auto iter(stock_trade_engine_map_.begin());
         iter != stock_trade_engine_map_.end();
         ++iter) {
-      results.merge(iter->second->Print());
+      results.splice(results.end(), iter->second->Print());
     }
     return results;
   }

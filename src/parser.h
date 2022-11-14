@@ -1,7 +1,8 @@
+
+#pragma once
 #include <memory>
 
 #include "types.h"
-#include "allocator.h"
 
 namespace order_book {
 /*
@@ -32,7 +33,6 @@ Inputs:
 class OrderParser {
   public:
   OrderPtr Parse(const char* input);
-  private:
 };
 
 }

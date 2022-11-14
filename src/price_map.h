@@ -13,7 +13,8 @@ constexpr char kFill[] = "F";
 template <class CompareOperator>
 class PriceMap {
   public:
-
+    typedef std::map<NormalizedPrice, OrderList, CompareOperator> PriceOrderListMap;
+    typedef typename PriceOrderListMap::const_iterator PriceOrderListMapConstIterator;
     std::size_t Size() {
       return price_map_.size();
     }
@@ -33,7 +34,6 @@ class PriceMap {
     Results results;
     Quantity total_trade_quantity(0);
     CompareOperator compare_op;
-    order->Print();
     for (auto price_map_iter(price_map_.begin()); price_map_iter != price_map_.end() && order->quantity > 0;) {
       if(price_map_iter->first == order->normalized_price ||
         compare_op(price_map_iter->first, order->normalized_price)) {
@@ -48,7 +48,7 @@ class PriceMap {
             results.push_back(
               std::string(kFill) + " " +
               std::to_string((*iter)->order_id) + " " +
-              std::string((*iter)->symbol.bytes) + " " +
+              std::string((*iter)->symbol.data()) + " " +
               std::to_string(trade_quantity) + " " +
               std::to_string(GetDeNormalizedPrice((*iter)->normalized_price))
               );
@@ -71,7 +71,7 @@ class PriceMap {
       results.push_front(
               std::string(kFill) + " " +
               std::to_string(order->order_id) + " " +
-              std::string(order->symbol.bytes) + " " +
+              std::string(order->symbol.data()) + " " +
               std::to_string(total_trade_quantity) + " " +
               std::to_string(GetDeNormalizedPrice(order->normalized_price))
               );
@@ -80,13 +80,23 @@ class PriceMap {
   }
 
   Results Print(const std::string& type) const{
+    return InternalPrint(type, price_map_.begin(), price_map_.end());
+  }
+
+  Results ReversePrint(const std::string& type) const{
+    return InternalPrint(type, price_map_.rbegin(), price_map_.rend());
+  }
+
+  private:
+  template<class Iterator>
+  Results InternalPrint(const std::string& type, Iterator begin, Iterator end) const{
     Results results;
-    for (auto price_map_iter(price_map_.rbegin()); price_map_iter != price_map_.rend(); ++price_map_iter) {
+    for (auto price_map_iter(begin); price_map_iter != end; ++price_map_iter) {
       for(auto iter(price_map_iter->second.begin()); iter != price_map_iter->second.end(); ++iter) {
         results.push_back(
           "P " +
           std::to_string((*iter)->order_id) + " " +
-          std::string((*iter)->symbol.bytes) + " " +
+          std::string((*iter)->symbol.data()) + " " +
           type + " " +
           std::to_string((*iter)->quantity) + " " +
           std::to_string(GetDeNormalizedPrice((*iter)->normalized_price))
@@ -95,8 +105,8 @@ class PriceMap {
     }
     return results;
   }
-  private:
-  std::map<NormalizedPrice, OrderList, CompareOperator> price_map_;
+
+  PriceOrderListMap price_map_;
 };
 
 }

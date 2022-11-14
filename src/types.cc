@@ -5,8 +5,8 @@
 #include <list>
 namespace order_book
 {
-  void Order::Print()
+  void Order::Print() const
   {
-    std::cout << action << " " << order_id << " " << symbol.bytes << " " << side << " " << quantity << " " << normalized_price << std::endl;
+    std::cout << action << " " << order_id << " " << symbol.data() << " " << side << " " << quantity << " " << normalized_price << std::endl;
   }
 }

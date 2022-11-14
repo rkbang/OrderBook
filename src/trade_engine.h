@@ -35,7 +35,7 @@ namespace order_book {
     Results Order(OrderPtr order);
     StockTradeEngine& GetStockTradeEngine(OrderPtr order);
 
-    std::unordered_map<std::string, std::unique_ptr<StockTradeEngine>> stock_trade_engine_map_;
+    std::unordered_map<Symbol, std::unique_ptr<StockTradeEngine>, SymbolHashFunction> stock_trade_engine_map_;
 
   };
 }

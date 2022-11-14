@@ -15,12 +15,11 @@ public:
     results_t action(const std::string& line) { 
         order_book::OrderPtr order_ptr = order_parser_.Parse(line.c_str());
         if (order_ptr) {
-            order_ptr->Print();
             return trade_engine_.Process(order_ptr);
-        } else {
-            std::cout << "Unable to parse order";
-        }
-        return(results_t()); 
+        } 
+        results_t results;
+        results.push_back("E Unable to process: " + line);
+        return results;
     }
 private:
     order_book::OrderParser order_parser_;
@@ -37,7 +36,7 @@ int main(int argc, char **argv)
         results_t results = scross.action(line);
         for (results_t::const_iterator it=results.begin(); it!=results.end(); ++it)
         {
-            std::cout << "Result " << *it << std::endl;
+            std::cout << *it << std::endl;
         }
     }
     return 0;

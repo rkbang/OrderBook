@@ -48,6 +48,8 @@ namespace order_book
         Quantity quantity;
         NormalizedPrice normalized_price;
         void Print() const;
+        void Reset(Action action, OrderId order_id, const Symbol& symbol, Side side, Quantity quantity, double price);
+
     } __attribute__ ((aligned));
 
     typedef Order* OrderPtr;

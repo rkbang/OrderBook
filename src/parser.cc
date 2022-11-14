@@ -7,13 +7,19 @@ namespace order_book {
 constexpr char format[] = "%c %u %s %c %hu %lf";
 
 OrderPtr OrderParser::Parse(const char* input) {
-  OrderPtr order = Allocator<Order>::instance().allocate();
+  
+  Action action = '\0';
+  Side side = '\0';
+  OrderId order_id = 0;
+  Quantity quantity = 0;
   double price = 0.0;
-  if (sscanf(input, format, &order->action, &order->order_id, order->symbol.data(), &order->side, &order->quantity, &price) <= 0) {
-    Allocator<Order>::instance().deallocate(order);
+  Symbol symbol = {'\0'};
+
+  if (sscanf(input, format, &action, &order_id, symbol.data(), &side, &quantity, &price) <= 0) {
     return nullptr;
   }
-  order->normalized_price = price * kNormalizationMultiplier;
+  OrderPtr order = Allocator<Order>::instance().allocate();
+  order->Reset(action, order_id, symbol, side, quantity, price);
   return order;
 }
 }

@@ -3,6 +3,9 @@
 
 #include "types.h"
 
+/*
+Order list to be used for same price level.
+*/
 namespace order_book {
   typedef std::list<OrderPtr> OrderPtrListType;
   typedef OrderPtrListType::iterator OrderPtrListTypeIterator;

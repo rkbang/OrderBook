@@ -39,7 +39,7 @@ namespace order_book
         }
     };
 
-    struct __attribute__ ((__packed__)) Order
+    struct Order
     {
         Action action;
         OrderId order_id;

@@ -37,6 +37,7 @@ namespace order_book {
     return results;
   }
   Results StockTradeEngine::Cancel(OrderPtrListTypeIterator order_ptr_list_iterator) {
+    Results results;
     switch((*order_ptr_list_iterator)->side) {
       case kBuy:
       buy_side_price_map_.Remove(order_ptr_list_iterator);
@@ -44,8 +45,10 @@ namespace order_book {
       case kSell:
       sell_side_price_map_.Remove(order_ptr_list_iterator);
       break;
+      default:
+        results.push_back("E Invalid side " +  std::string(1, (*order_ptr_list_iterator)->side));
     }
-    return Results();
+    return results;
   }
 
   Results StockTradeEngine::Print() const {
@@ -91,7 +94,6 @@ namespace order_book {
     } else {
       results.push_back("X " +  std::to_string(order->order_id));
       GetStockTradeEngine(*(order_id_list_ptr_iterator_map_iterator->second)).Cancel(order_id_list_ptr_iterator_map_iterator->second);
-      OrderRegistry::instance().RemoveOrder(order_id_list_ptr_iterator_map_iterator->second);
     }
     return results;
   }

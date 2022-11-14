@@ -12,11 +12,11 @@ namespace order_book {
     StockTradeEngine();
     Results Process(OrderPtr order);
     Results Print() const;
-
+    Results Cancel(OrderPtrListTypeIterator order_ptr_list_iterator);
     private: 
     Results Buy(OrderPtr order);
     Results Sell(OrderPtr order);
-    Results Cancel(OrderPtr order);
+    
     Results Order(OrderPtr order);
 
     BuySidePriceMap buy_side_price_map_;
@@ -27,11 +27,15 @@ namespace order_book {
   class TradeEngine {
     public:
     Results Process(OrderPtr order);
+    void AddOrderForTracking(OrderPtrListTypeIterator order_ptr_list_iterator);
 
     private:
     Results Print() const;
+    Results Cancel(OrderPtr order);
+    Results Order(OrderPtr order);
+    StockTradeEngine& GetStockTradeEngine(OrderPtr order);
 
-    std::unordered_map<std::string, StockTradeEngine> stock_trade_engine_map_;
-    std::unordered_map<OrderId, OrderPtrListTypeIterator> order_id_list_ptr_iterator_map_;
+    std::unordered_map<std::string, std::unique_ptr<StockTradeEngine>> stock_trade_engine_map_;
+
   };
 }

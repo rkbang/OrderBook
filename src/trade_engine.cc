@@ -2,6 +2,7 @@
 #include <unordered_map>
 
 #include "trade_engine.h"
+#include "order_registry.h"
 
 namespace order_book {
   constexpr char kBuy = 'B';
@@ -10,46 +11,47 @@ namespace order_book {
   constexpr char kPrint = 'P';
   constexpr char kOrder = 'O';
   constexpr char kBuyStr[] = "B";
-  constexpr char kSellStr[] = "B";
+  constexpr char kSellStr[] = "S";
 
-  StockTradeEngine::StockTradeEngine() {
+  StockTradeEngine::StockTradeEngine()
+  {
     action_processing_function_map_[kBuy] = std::bind(&StockTradeEngine::Buy, this, std::placeholders::_1);
     action_processing_function_map_[kSell] = std::bind(&StockTradeEngine::Sell, this, std::placeholders::_1);
-    action_processing_function_map_[kCancel] = std::bind(&StockTradeEngine::Cancel, this, std::placeholders::_1);
     action_processing_function_map_[kOrder] = std::bind(&StockTradeEngine::Order, this, std::placeholders::_1);
   }
 
 
   Results StockTradeEngine::Buy(OrderPtr order) {
-    std::cout << "BuyMapSize " << buy_side_price_map_.Size() 
-    << " SellMapSize " << sell_side_price_map_.Size() << std::endl;
     Results results = sell_side_price_map_.ProcessOrder(order);
     if (order->quantity > 0) {
       buy_side_price_map_.Add(order);
-      std::cout << "Adding Buy Order " << buy_side_price_map_.Size()<< std::endl;
     }
-    std::cout << "Buy" << std::endl;
     return results;
   }
+
   Results StockTradeEngine::Sell(OrderPtr order) {
-    std::cout << "BuyMapSize " << buy_side_price_map_.Size() 
-    << " SellMapSize " << sell_side_price_map_.Size() << std::endl;
     Results results = buy_side_price_map_.ProcessOrder(order);
     if (order->quantity > 0) {
       sell_side_price_map_.Add(order);
-      std::cout << "Adding Sell Order" << sell_side_price_map_.Size()<< std::endl;
     }
-    std::cout << "Sell" << std::endl;
     return results;
   }
-  Results StockTradeEngine::Cancel(OrderPtr order) {
+  Results StockTradeEngine::Cancel(OrderPtrListTypeIterator order_ptr_list_iterator) {
+    switch((*order_ptr_list_iterator)->side) {
+      case kBuy:
+      buy_side_price_map_.Remove(order_ptr_list_iterator);
+      break;
+      case kSell:
+      sell_side_price_map_.Remove(order_ptr_list_iterator);
+      break;
+    }
     return Results();
   }
 
   Results StockTradeEngine::Print() const {
     Results results;
-    results.merge(sell_side_price_map_.Print(kSellStr));
-    results.merge(sell_side_price_map_.Print(kBuyStr)); 
+    results.splice(results.end(), sell_side_price_map_.Print(kSellStr));
+    results.splice(results.end(), buy_side_price_map_.Print(kBuyStr)); 
     return results;
   }
 
@@ -62,31 +64,61 @@ namespace order_book {
   }
 
   Results StockTradeEngine::Process(OrderPtr order) {
-    std::cout << "StockTradeEngine::Process " << order->action << std::endl;
     auto iter = action_processing_function_map_.find(order->action);
     if (iter != action_processing_function_map_.end()) {
-      std::cout << "StockTradeEngine::Process Found" << std::endl;
       return iter->second(order);
     }
     return Results();
   }
 
+  StockTradeEngine& TradeEngine::GetStockTradeEngine(OrderPtr order) {
+    auto symbol_trade_engine_iter = stock_trade_engine_map_.find(std::string(order->symbol.bytes));
+    if (symbol_trade_engine_iter == stock_trade_engine_map_.end()) {
+      symbol_trade_engine_iter = stock_trade_engine_map_.emplace(std::string(order->symbol.bytes), 
+      std::make_unique<StockTradeEngine>()).first;
+    }
+    return *(symbol_trade_engine_iter->second);
+  }
+
+  Results TradeEngine::Cancel(OrderPtr order) { 
+    Results results;
+    auto& order_id_list_ptr_iterator_map = OrderRegistry::instance().GetOrderRegistryMap();
+    auto order_id_list_ptr_iterator_map_iterator = order_id_list_ptr_iterator_map.find(order->order_id);
+    if (order_id_list_ptr_iterator_map_iterator == order_id_list_ptr_iterator_map.end()) {
+      results.push_back("E Invalid Order Id " +  std::to_string(order->order_id));
+      return results;
+    } else {
+      results.push_back("X " +  std::to_string(order->order_id));
+      GetStockTradeEngine(*(order_id_list_ptr_iterator_map_iterator->second)).Cancel(order_id_list_ptr_iterator_map_iterator->second);
+      OrderRegistry::instance().RemoveOrder(order_id_list_ptr_iterator_map_iterator->second);
+    }
+    return results;
+  }
+
+  Results TradeEngine::Order(OrderPtr order) { 
+    Results results;
+    if(OrderRegistry::instance().OrderExists(order->order_id)) {
+      results.push_back("E " + std::to_string(order->order_id) + " Duplicate order id");
+      return results;
+    }
+    StockTradeEngine& stock_trade_engine(GetStockTradeEngine(order));
+    results.merge(stock_trade_engine.Process(order));
+    return results;
+  }
+
   Results TradeEngine::Process(OrderPtr order) {
-    std::cout << "TradeEngine::Process" << std::endl;
-    if (order->action == kCancel) {
-      auto order_id_list_ptr_iterator_map_iterator = order_id_list_ptr_iterator_map_.find(order->order_id);
-      if (order_id_list_ptr_iterator_map_iterator == order_id_list_ptr_iterator_map_.end()) {
-        Results results;
-        results.push_back("E Invalid Order Id " +  std::to_string(order->order_id));
-        return results;
-      }
-      OrderPtrListTypeIterator iter = order_id_list_ptr_iterator_map_iterator->second;
-      return stock_trade_engine_map_[(*iter)->symbol.bytes].Process(order);
-    }
-    if (order->action == kPrint) {
+    Results results;
+    switch(order->action) {
+      case kPrint:
       return Print();
+      case kCancel:
+      return Cancel(order);
+      case kOrder:
+      return Order(order);
+      default:
+        results.push_back("E Invalid action " +  std::string(1, order->action));
     }
-    return stock_trade_engine_map_[order->symbol.bytes].Process(order);
+    return results;
   }
 
   Results TradeEngine::Print() const{
@@ -94,7 +126,7 @@ namespace order_book {
     for(auto iter(stock_trade_engine_map_.begin());
         iter != stock_trade_engine_map_.end();
         ++iter) {
-      results.merge(iter->second.Print());
+      results.merge(iter->second->Print());
     }
     return results;
   }

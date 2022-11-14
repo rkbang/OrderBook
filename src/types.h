@@ -21,6 +21,9 @@ namespace order_book
     typedef std::list<std::string> Results;
     constexpr uint64_t kNormalizationMultiplier = 100000;
 
+    constexpr double GetDeNormalizedPrice(double price) {
+        return price/kNormalizationMultiplier;
+    }
 
     struct Order
     {

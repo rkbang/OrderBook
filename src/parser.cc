@@ -33,7 +33,6 @@ Inputs:
 constexpr char format[] = "%c %u %s %c %hu %lf";
 
 OrderPtr OrderParser::Parse(const char* input) {
-  std::cout << input << std::endl;
   OrderPtr order = Allocator<Order>::instance().allocate();
   double price = 0.0;
   if (sscanf(input, format, &order->action, &order->order_id, &order->symbol.bytes, &order->side, &order->quantity, &price) <= 0) {
